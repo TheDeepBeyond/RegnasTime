@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ゲーム内時間判定</title>
+  <style>
+    input { margin: 4px; width: 120px; font-size: 1em; }
+    button { margin: 4px; padding: 6px 12px; }
+    .example-text { font-size: 0.9em; color: #555; }
+    .input-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    #dropzone {
+      margin-top: 1em; height: 60px; padding: 2em;
+      font-size: 1.2em; text-align: center;
+      line-height: 1.6; color: #555;
+      border: 2px dashed #aaa; background: #f8f8f8;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    #dropzone.dragover {
+      background: #e0f4ff; border-color: #339af0; color: #000;
+    }
+    #result-container {
+      margin-top: 1em; display: flex;
+      background: #f9f9f9; border: 1px solid #ccc;
+      padding: 10px; font-size: 1.1em;
+    }
+    #result {
+      flex: 1; white-space: pre-wrap;
+    }
+    #preview {
+      flex: 1; margin-left: 12px;
+      border-left: 1px solid #ddd; padding-left: 12px;
+      background: #fff;
+    }
+    #preview img {
+      display: block; max-width: 100%; max-height: 100%; object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <h3>レグナス時間変換計算機</h3>
+
+  <div class="input-row">
+    <div>
+      <input id="date" placeholder="YYYYMMDD">
+      <div class="example-text">例：20250115</div>
+    </div>
+    <div>
+      <input id="time" placeholder="hhmmss">
+      <div class="example-text">例：015847</div>
+    </div>
+    <button onclick="convert()">判定</button>
+  </div>
+
+  <div id="dropzone">
+    画像ファイルをここにドロップしてください。<br>
+    形式例: BlueProtocol_20250115_015847.png
+  </div>
+
+  <div id="result-container">
+    <div id="result"></div>
+    <div id="preview">プレビュー表示</div>
+  </div>
+
+  <script>
+    const baseTime = new Date(2023, 5, 14, 0, 2, 0);
+    const cycleSec = 1500;
+
+    function toHalfWidth(str) {
+      return str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+    }
+
+    function convert() {
+      const dateStr = toHalfWidth(document.getElementById("date").value.trim());
+      const timeStr = toHalfWidth(document.getElementById("time").value.trim());
+      const match = dateStr.match(/^(\d{4})(\d{2})(\d{2})$/);
+      const timeMatch = timeStr.match(/^(\d{2})(\d{2})(\d{2})$/);
+      if (!match || !timeMatch) return show("形式は YYYYMMDD と hhmmss です。");
+
+      const inputTime = new Date(+match[1], +match[2] - 1, +match[3], +timeMatch[1], +timeMatch[2], +timeMatch[3]);
+      if (isNaN(inputTime.getTime())) return show("指定された日時が無効です。");
+
+      runPhaseConversion(inputTime, "手入力");
+    }
+
+    function runPhaseConversion(inputTime, label) {
+      const result = document.getElementById("result");
+      const diffSec = Math.floor((inputTime - baseTime) / 1000);
+      const cycleIndex = Math.floor(diffSec / cycleSec);
+      const phaseStartTime = new Date(baseTime.getTime() + cycleIndex * cycleSec * 1000);
+      const offsetSec = Math.floor((inputTime - phaseStartTime) / 1000);
+      const phase = cycleIndex % 2 === 0 ? "昼" : "夜";
+      const mm = String(Math.floor(offsetSec / 60)).padStart(2, "0");
+      const ss = String(offsetSec % 60).padStart(2, "0");
+
+      const gameTimeText = `<div style="
+        font-size: 1.2em; font-weight: bold;
+        padding: 2px 6px; margin-bottom: 8px;
+        background: ${phase === "昼" ? "#f0fff0" : "#f0f4ff"};
+        border-left: 4px solid ${phase === "昼" ? "#7ccf7c" : "#6699cc"};
+        border-radius: 3px;
+      ">
+      ゲーム内時間：${phase}時間 ${mm}分${ss}秒 / 25分00秒
+      </div>`;
+
+      result.innerHTML =
+        gameTimeText +
+        "入力ソース: " + label + "<br><br>" +
+        "指定時刻: " + inputTime.toLocaleString() + "<br>" +
+        "基準時刻: 2023/06/14 00:02:00（昼00:00）<br>" +
+        "差分秒数: " + diffSec + " 秒<br>" +
+        "周期番号: " + cycleIndex + "（1周期 = " + cycleSec + " 秒）<br>" +
+        "フェーズ判定: " + (cycleIndex % 2) + " → " + phase + "<br>" +
+        "フェーズ開始時刻: " + phaseStartTime.toLocaleString() + "<br>" +
+        "フェーズ内時間: " + offsetSec + " 秒 → " + mm + "分" + ss + "秒";
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+      dropzone.classList.remove("dragover");
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+
+      const match = file.name.match(/(\d{8})_(\d{6})/);
+      if (!match) return show("ファイル名に日時情報が見つかりません: " + file.name);
+
+      const dt = new Date(
+        +match[1].slice(0, 4),
+        +match[1].slice(4, 6) - 1,
+        +match[1].slice(6, 8),
+        +match[2].slice(0, 2),
+        +match[2].slice(2, 4),
+        +match[2].slice(4, 6)
+      );
+      if (isNaN(dt.getTime())) return show("抽出された日時が無効です。");
+
+      runPhaseConversion(dt, "ファイル名 " + file.name);
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById("preview").innerHTML =
+          `<img src="${e.target.result}" alt="プレビュー画像">`;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleDragEnter(e) { e.preventDefault(); }
+    function handleDragOver(e) {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    }
+    function handleDragLeave(e) {
+      dropzone.classList.remove("dragover");
+    }
+    function show(text) {
+      document.getElementById("result").textContent = text;
+      document.getElementById("preview").textContent = "";
+    }
+
+    document.addEventListener("dragover", e => e.preventDefault());
+    document.addEventListener("drop", e => e.preventDefault());
+
+    const dropzone = document.getElementById("dropzone");
+    dropzone.addEventListener("drop", handleDrop);
+    dropzone.addEventListener("dragenter", handleDragEnter);
+    dropzone.addEventListener("dragover", handleDragOver);
+    dropzone.addEventListener("dragleave", handleDragLeave);
+  </script>
+</body>
+</html>

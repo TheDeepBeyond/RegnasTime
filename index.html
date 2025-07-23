@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ƒQ[ƒ€“àŠÔ”»’è</title>
+  <title>ã‚²ãƒ¼ãƒ å†…æ™‚é–“åˆ¤å®š</title>
   <style>
     input { margin: 4px; width: 120px; font-size: 1em; }
     button { margin: 4px; padding: 6px 12px; }
@@ -36,28 +36,28 @@
   </style>
 </head>
 <body>
-  <h3>ƒŒƒOƒiƒXŠÔ•ÏŠ·ŒvZ‹@</h3>
+  <h3>ãƒ¬ã‚°ãƒŠã‚¹æ™‚é–“å¤‰æ›è¨ˆç®—æ©Ÿ</h3>
 
   <div class="input-row">
     <div>
       <input id="date" placeholder="YYYYMMDD">
-      <div class="example-text">—áF20250115</div>
+      <div class="example-text">ä¾‹ï¼š20250115</div>
     </div>
     <div>
       <input id="time" placeholder="hhmmss">
-      <div class="example-text">—áF015847</div>
+      <div class="example-text">ä¾‹ï¼š015847</div>
     </div>
-    <button onclick="convert()">”»’è</button>
+    <button onclick="convert()">åˆ¤å®š</button>
   </div>
 
   <div id="dropzone">
-    ‰æ‘œƒtƒ@ƒCƒ‹‚ğ‚±‚±‚Éƒhƒƒbƒv‚µ‚Ä‚­‚¾‚³‚¢B<br>
-    Œ`®—á: BlueProtocol_20250115_015847.png
+    ç”»åƒãƒ•ã‚¡ã‚¤ãƒ«ã‚’ã“ã“ã«ãƒ‰ãƒ­ãƒƒãƒ—ã—ã¦ãã ã•ã„ã€‚<br>
+    å½¢å¼ä¾‹: BlueProtocol_20250115_015847.png
   </div>
 
   <div id="result-container">
     <div id="result"></div>
-    <div id="preview">ƒvƒŒƒrƒ…[•\¦</div>
+    <div id="preview">ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼è¡¨ç¤º</div>
   </div>
 
   <script>
@@ -65,7 +65,7 @@
     const cycleSec = 1500;
 
     function toHalfWidth(str) {
-      return str.replace(/[‚O-‚X]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+      return str.replace(/[ï¼-ï¼™]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
     }
 
     function convert() {
@@ -73,12 +73,12 @@
       const timeStr = toHalfWidth(document.getElementById("time").value.trim());
       const match = dateStr.match(/^(\d{4})(\d{2})(\d{2})$/);
       const timeMatch = timeStr.match(/^(\d{2})(\d{2})(\d{2})$/);
-      if (!match || !timeMatch) return show("Œ`®‚Í YYYYMMDD ‚Æ hhmmss ‚Å‚·B");
+      if (!match || !timeMatch) return show("å½¢å¼ã¯ YYYYMMDD ã¨ hhmmss ã§ã™ã€‚");
 
       const inputTime = new Date(+match[1], +match[2] - 1, +match[3], +timeMatch[1], +timeMatch[2], +timeMatch[3]);
-      if (isNaN(inputTime.getTime())) return show("w’è‚³‚ê‚½“ú‚ª–³Œø‚Å‚·B");
+      if (isNaN(inputTime.getTime())) return show("æŒ‡å®šã•ã‚ŒãŸæ—¥æ™‚ãŒç„¡åŠ¹ã§ã™ã€‚");
 
-      runPhaseConversion(inputTime, "è“ü—Í");
+      runPhaseConversion(inputTime, "æ‰‹å…¥åŠ›");
     }
 
     function runPhaseConversion(inputTime, label) {
@@ -87,30 +87,30 @@
       const cycleIndex = Math.floor(diffSec / cycleSec);
       const phaseStartTime = new Date(baseTime.getTime() + cycleIndex * cycleSec * 1000);
       const offsetSec = Math.floor((inputTime - phaseStartTime) / 1000);
-      const phase = cycleIndex % 2 === 0 ? "’‹" : "–é";
+      const phase = cycleIndex % 2 === 0 ? "æ˜¼" : "å¤œ";
       const mm = String(Math.floor(offsetSec / 60)).padStart(2, "0");
       const ss = String(offsetSec % 60).padStart(2, "0");
 
       const gameTimeText = `<div style="
         font-size: 1.2em; font-weight: bold;
         padding: 2px 6px; margin-bottom: 8px;
-        background: ${phase === "’‹" ? "#f0fff0" : "#f0f4ff"};
-        border-left: 4px solid ${phase === "’‹" ? "#7ccf7c" : "#6699cc"};
+        background: ${phase === "æ˜¼" ? "#f0fff0" : "#f0f4ff"};
+        border-left: 4px solid ${phase === "æ˜¼" ? "#7ccf7c" : "#6699cc"};
         border-radius: 3px;
       ">
-      ƒQ[ƒ€“àŠÔF${phase}ŠÔ ${mm}•ª${ss}•b / 25•ª00•b
+      ã‚²ãƒ¼ãƒ å†…æ™‚é–“ï¼š${phase}æ™‚é–“ ${mm}åˆ†${ss}ç§’ / 25åˆ†00ç§’
       </div>`;
 
       result.innerHTML =
         gameTimeText +
-        "“ü—Íƒ\[ƒX: " + label + "<br><br>" +
-        "w’è: " + inputTime.toLocaleString() + "<br>" +
-        "Šî€: 2023/06/14 00:02:00i’‹00:00j<br>" +
-        "·•ª•b”: " + diffSec + " •b<br>" +
-        "üŠú”Ô†: " + cycleIndex + "i1üŠú = " + cycleSec + " •bj<br>" +
-        "ƒtƒF[ƒY”»’è: " + (cycleIndex % 2) + " ¨ " + phase + "<br>" +
-        "ƒtƒF[ƒYŠJn: " + phaseStartTime.toLocaleString() + "<br>" +
-        "ƒtƒF[ƒY“àŠÔ: " + offsetSec + " •b ¨ " + mm + "•ª" + ss + "•b";
+        "å…¥åŠ›ã‚½ãƒ¼ã‚¹: " + label + "<br><br>" +
+        "æŒ‡å®šæ™‚åˆ»: " + inputTime.toLocaleString() + "<br>" +
+        "åŸºæº–æ™‚åˆ»: 2023/06/14 00:02:00ï¼ˆæ˜¼00:00ï¼‰<br>" +
+        "å·®åˆ†ç§’æ•°: " + diffSec + " ç§’<br>" +
+        "å‘¨æœŸç•ªå·: " + cycleIndex + "ï¼ˆ1å‘¨æœŸ = " + cycleSec + " ç§’ï¼‰<br>" +
+        "ãƒ•ã‚§ãƒ¼ã‚ºåˆ¤å®š: " + (cycleIndex % 2) + " â†’ " + phase + "<br>" +
+        "ãƒ•ã‚§ãƒ¼ã‚ºé–‹å§‹æ™‚åˆ»: " + phaseStartTime.toLocaleString() + "<br>" +
+        "ãƒ•ã‚§ãƒ¼ã‚ºå†…æ™‚é–“: " + offsetSec + " ç§’ â†’ " + mm + "åˆ†" + ss + "ç§’";
     }
 
     function handleDrop(event) {
@@ -120,7 +120,7 @@
       if (!file) return;
 
       const match = file.name.match(/(\d{8})_(\d{6})/);
-      if (!match) return show("ƒtƒ@ƒCƒ‹–¼‚É“úî•ñ‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ: " + file.name);
+      if (!match) return show("ãƒ•ã‚¡ã‚¤ãƒ«åã«æ—¥æ™‚æƒ…å ±ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“: " + file.name);
 
       const dt = new Date(
         +match[1].slice(0, 4),
@@ -130,14 +130,14 @@
         +match[2].slice(2, 4),
         +match[2].slice(4, 6)
       );
-      if (isNaN(dt.getTime())) return show("’Šo‚³‚ê‚½“ú‚ª–³Œø‚Å‚·B");
+      if (isNaN(dt.getTime())) return show("æŠ½å‡ºã•ã‚ŒãŸæ—¥æ™‚ãŒç„¡åŠ¹ã§ã™ã€‚");
 
-      runPhaseConversion(dt, "ƒtƒ@ƒCƒ‹–¼ " + file.name);
+      runPhaseConversion(dt, "ãƒ•ã‚¡ã‚¤ãƒ«å " + file.name);
 
       const reader = new FileReader();
       reader.onload = e => {
         document.getElementById("preview").innerHTML =
-          `<img src="${e.target.result}" alt="ƒvƒŒƒrƒ…[‰æ‘œ">`;
+          `<img src="${e.target.result}" alt="ãƒ—ãƒ¬ãƒ“ãƒ¥ãƒ¼ç”»åƒ">`;
       };
       reader.readAsDataURL(file);
     }

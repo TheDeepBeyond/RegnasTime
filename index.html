@@ -46,19 +46,19 @@
           this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
           if (this.value.length === 8) document.getElementById('time').focus();
         ">
-      <div class="example-text">例：20250115</div>
+      <div class="example-text">例：20240614</div>
     </div>
     <div>
       <input id="time" placeholder="hhmmss"
         oninput="this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));">
-      <div class="example-text">例：015847</div>
+      <div class="example-text">例：151230</div>
     </div>
     <button onclick="convert()">判定</button>
   </div>
 
   <div id="dropzone">
     画像ファイルをここにドロップしてください。<br>
-    形式例: BlueProtocol_20250115_015847.png
+    形式例: BlueProtocol_20240614_151230.png
   </div>
 
   <div id="result-container">
@@ -67,7 +67,7 @@
   </div>
 
   <script>
-    const baseTime = new Date(2024, 5, 14, 1, 2, 30);
+    const baseTime = new Date(2024, 5, 14, 15, 12, 30);
     const cycleSec = 1500;
 
     function convert() {
@@ -107,7 +107,7 @@
         gameTimeText +
         "入力ソース: " + label + "<br><br>" +
         "指定時刻: " + inputTime.toLocaleString() + "<br>" +
-        "基準時刻: 2024/06/14 01:02:30（昼時間 00分00秒）<br>" +
+        "基準時刻: 2024/06/14 15:12:30（昼時間 00分00秒）<br>" +
         "差分秒数: " + diffSec + " 秒<br>" +
         "周期番号: " + cycleIndex + "（1周期 = " + cycleSec + " 秒）<br>" +
         "フェーズ判定: " + (cycleIndex % 2) + " → " + phase + "<br>" +

@@ -1,4 +1,6 @@
 # レグナス時間変換計算機
+<h3>◆URL</h3>
+https://thedeepbeyond.github.io/RegnasTime/
 <h3>◆概要</h3>
 <li>BLUE PROTOCOLで撮影したスクリーンショットのファイル名の年月日時刻の形式（YYYYMMDD_hhmmss）からレグナス時間を算出する。</li>
 <li>年月日時刻の手動入力も可能。</li>

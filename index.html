@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta-charset:UTF-8>
-  <title>ゲーム内時間判定</title>
+  <meta charset="UTF-8">
+  <title>レグナス時間変換計算機</title>
   <style>
     input { margin: 4px; width: 120px; font-size: 1em; }
     button { margin: 4px; padding: 6px 12px; }
@@ -41,11 +41,16 @@
 
   <div class="input-row">
     <div>
-      <input id="date" placeholder="YYYYMMDD">
+      <input id="date" placeholder="YYYYMMDD"
+        oninput="
+          this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+          if (this.value.length === 8) document.getElementById('time').focus();
+        ">
       <div class="example-text">例：20250115</div>
     </div>
     <div>
-      <input id="time" placeholder="hhmmss">
+      <input id="time" placeholder="hhmmss"
+        oninput="this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));">
       <div class="example-text">例：015847</div>
     </div>
     <button onclick="convert()">判定</button>
@@ -62,12 +67,8 @@
   </div>
 
   <script>
-    const baseTime = new Date(2023, 5, 14, 0, 2, 0);
+    const baseTime = new Date(2023, 5, 14, 0, 2, 30);
     const cycleSec = 1500;
-
-    function toHalfWidth(str) {
-      return str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
-    }
 
     function convert() {
       const dateStr = toHalfWidth(document.getElementById("date").value.trim());
@@ -106,12 +107,16 @@
         gameTimeText +
         "入力ソース: " + label + "<br><br>" +
         "指定時刻: " + inputTime.toLocaleString() + "<br>" +
-        "基準時刻: 2023/06/14 00:02:00（昼00:00）<br>" +
+        "基準時刻: 2023/06/14 00:02:30（昼時間 00分00秒）<br>" +
         "差分秒数: " + diffSec + " 秒<br>" +
         "周期番号: " + cycleIndex + "（1周期 = " + cycleSec + " 秒）<br>" +
         "フェーズ判定: " + (cycleIndex % 2) + " → " + phase + "<br>" +
         "フェーズ開始時刻: " + phaseStartTime.toLocaleString() + "<br>" +
         "フェーズ内時間: " + offsetSec + " 秒 → " + mm + "分" + ss + "秒";
+    }
+
+    function toHalfWidth(str) {
+      return str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
     }
 
     function handleDrop(event) {
@@ -151,19 +156,20 @@
     function handleDragLeave(e) {
       dropzone.classList.remove("dragover");
     }
+
     function show(text) {
       document.getElementById("result").textContent = text;
       document.getElementById("preview").textContent = "";
     }
-
-    document.addEventListener("dragover", e => e.preventDefault());
-    document.addEventListener("drop", e => e.preventDefault());
 
     const dropzone = document.getElementById("dropzone");
     dropzone.addEventListener("drop", handleDrop);
     dropzone.addEventListener("dragenter", handleDragEnter);
     dropzone.addEventListener("dragover", handleDragOver);
     dropzone.addEventListener("dragleave", handleDragLeave);
+
+    document.addEventListener("dragover", e => e.preventDefault());
+    document.addEventListener("drop", e => e.preventDefault());
   </script>
 </body>
 </html>

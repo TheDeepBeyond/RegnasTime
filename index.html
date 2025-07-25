@@ -23,9 +23,7 @@
       background: #f9f9f9; border: 1px solid #ccc;
       padding: 10px; font-size: 1.1em;
     }
-    #result {
-      flex: 1; white-space: pre-wrap;
-    }
+    #result { flex: 1; white-space: pre-wrap; }
     #preview {
       flex: 1; margin-left: 12px;
       border-left: 1px solid #ddd; padding-left: 12px;
@@ -33,6 +31,9 @@
     }
     #preview img {
       display: block; max-width: 100%; max-height: 100%; object-fit: contain;
+    }
+    .gauge-wrapper {
+      text-align: center; margin-top: 1em;
     }
   </style>
 </head>
@@ -42,10 +43,8 @@
   <div class="input-row">
     <div>
       <input id="date" placeholder="YYYYMMDD"
-        oninput="
-          this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
-          if (this.value.length === 8) document.getElementById('time').focus();
-        ">
+        oninput="this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+                 if (this.value.length === 8) document.getElementById('time').focus();">
       <div class="example-text">例：20240614</div>
     </div>
     <div>
@@ -69,7 +68,6 @@
   <script>
     const baseTime = new Date(2024, 5, 14, 15, 12, 30);
     const cycleSec = 1500;
-
     function convert() {
       const dateStr = toHalfWidth(document.getElementById("date").value.trim());
       const timeStr = toHalfWidth(document.getElementById("time").value.trim());
@@ -93,16 +91,32 @@
       const mm = String(Math.floor(offsetSec / 60)).padStart(2, "0");
       const ss = String(offsetSec % 60).padStart(2, "0");
 
-      const gameTimeText = `<div style="
-        font-size: 1.2em; font-weight: bold;
-        padding: 2px 6px; margin-bottom: 8px;
-        background: ${phase === "昼" ? "#f0fff0" : "#f0f4ff"};
-        border-left: 4px solid ${phase === "昼" ? "#7ccf7c" : "#6699cc"};
-        border-radius: 3px;
-      ">
+      const gameTimeText = `
+  <div style="
+    display: flex; align-items: center; gap: 16px;
+    font-size: 1.2em; font-weight: bold;
+    padding: 8px 12px; margin-bottom: 8px;
+    background: ${phase === "昼" ? "#f0fff0" : "#f0f4ff"};
+    border-left: 4px solid ${phase === "昼" ? "#7ccf7c" : "#6699cc"};
+    border-radius: 4px;
+  ">
+    <div>
       ゲーム内時間：${phase}時間 ${mm}分${ss}秒 / 25分00秒
-      </div>`;
-
+    </div>
+    <svg width="60" height="60" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="50" fill="none" stroke="#eee" stroke-width="10"/>
+      <circle id="phaseGauge" cx="60" cy="60" r="50"
+        fill="none" stroke="#00aaff" stroke-width="10"
+        stroke-linecap="round"
+        stroke-dasharray="314"
+        stroke-dashoffset="314"
+        transform="rotate(-90 60 60)"
+      />
+      <text id="gaugeText" x="60" y="60" font-size="48" font-weight="bold" fill="#333"
+        text-anchor="middle" dominant-baseline="middle">--</text>
+    </svg>
+  </div>
+`;
       result.innerHTML =
         gameTimeText +
         "入力ソース: " + label + "<br><br>" +
@@ -113,8 +127,15 @@
         "フェーズ判定: " + (cycleIndex % 2) + " → " + phase + "<br>" +
         "フェーズ開始時刻: " + phaseStartTime.toLocaleString() + "<br>" +
         "フェーズ内時間: " + offsetSec + " 秒 → " + mm + "分" + ss + "秒";
-    }
 
+      // ゲージ更新
+      const gauge = document.getElementById("phaseGauge");
+      const gaugeText = document.getElementById("gaugeText");
+      const gaugeLength = 314;
+      const ratio = Math.min(offsetSec / cycleSec, 1);
+      gauge.setAttribute("stroke-dashoffset", gaugeLength * (1 - ratio));
+      gaugeText.textContent = phase;
+    }
     function toHalfWidth(str) {
       return str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
     }
@@ -160,6 +181,8 @@
     function show(text) {
       document.getElementById("result").textContent = text;
       document.getElementById("preview").textContent = "";
+      document.getElementById("gaugeText").textContent = "--:--";
+      document.getElementById("phaseGauge").setAttribute("stroke-dashoffset", "314");
     }
 
     const dropzone = document.getElementById("dropzone");

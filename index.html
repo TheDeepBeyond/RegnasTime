@@ -32,19 +32,15 @@
     #preview img {
       display: block; max-width: 100%; max-height: 100%; object-fit: contain;
     }
-    .gauge-wrapper {
-      text-align: center; margin-top: 1em;
-    }
+    .gauge-wrapper { text-align: center; margin-top: 1em; }
   </style>
 </head>
 <body>
   <h3>レグナス時間変換計算機</h3>
-
   <div class="input-row">
     <div>
       <input id="date" placeholder="YYYYMMDD"
-        oninput="this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
-                 if (this.value.length === 8) document.getElementById('time').focus();">
+        oninput="this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)); if (this.value.length === 8) document.getElementById('time').focus();">
       <div class="example-text">例：20240614</div>
     </div>
     <div>
@@ -64,13 +60,15 @@
     <div id="result"></div>
     <div id="preview">プレビュー表示</div>
   </div>
-
   <script>
-    const baseTime = new Date(2024, 5, 14, 15, 12, 30);
+    const baseTimeB = new Date(2024, 5, 26, 16, 22, 40); // 2024/06/26 16:22:40
     const cycleSec = 1500;
+    const offsetSec = 750;
+
     function convert() {
       const dateStr = toHalfWidth(document.getElementById("date").value.trim());
       const timeStr = toHalfWidth(document.getElementById("time").value.trim());
+
       const match = dateStr.match(/^(\d{4})(\d{2})(\d{2})$/);
       const timeMatch = timeStr.match(/^(\d{2})(\d{2})(\d{2})$/);
       if (!match || !timeMatch) return show("形式は YYYYMMDD と hhmmss です。");
@@ -78,66 +76,86 @@
       const inputTime = new Date(+match[1], +match[2] - 1, +match[3], +timeMatch[1], +timeMatch[2], +timeMatch[3]);
       if (isNaN(inputTime.getTime())) return show("指定された日時が無効です。");
 
-      runPhaseConversion(inputTime, "手入力");
+      if (inputTime.getTime() < baseTimeB.getTime()) {
+        runPhaseConversionA(inputTime, "手入力", "A判定");
+      } else {
+        runPhaseConversionB(inputTime, "手入力", "B判定");
+      }
     }
 
-    function runPhaseConversion(inputTime, label) {
-      const result = document.getElementById("result");
+    function toHalfWidth(str) {
+      return str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+    }
+
+    function getDynamicBaseTime(dt) {
+      const y = dt.getFullYear();
+      const m = dt.getMonth();
+      const d = dt.getDate();
+      const nineAM = new Date(y, m, d, 9, 0, 0);
+      const base = new Date(nineAM.getTime() - cycleSec * 1000 - offsetSec * 1000);
+      return dt < nineAM ? new Date(base.getTime() - 24 * 60 * 60 * 1000) : base;
+    }
+    function runPhaseConversionA(inputTime, label, modeLabel) {
+      const baseTime = getDynamicBaseTime(inputTime);
       const diffSec = Math.floor((inputTime - baseTime) / 1000);
       const cycleIndex = Math.floor(diffSec / cycleSec);
       const phaseStartTime = new Date(baseTime.getTime() + cycleIndex * cycleSec * 1000);
-      const offsetSec = Math.floor((inputTime - phaseStartTime) / 1000);
+      const offset = diffSec % cycleSec;
       const phase = cycleIndex % 2 === 0 ? "昼" : "夜";
-      const mm = String(Math.floor(offsetSec / 60)).padStart(2, "0");
-      const ss = String(offsetSec % 60).padStart(2, "0");
+      const mm = String(Math.floor(offset / 60)).padStart(2, "0");
+      const ss = String(offset % 60).padStart(2, "0");
 
-      const gameTimeText = `
-  <div style="
-    display: flex; align-items: center; gap: 16px;
-    font-size: 1.2em; font-weight: bold;
-    padding: 8px 12px; margin-bottom: 8px;
-    background: ${phase === "昼" ? "#f0fff0" : "#f0f4ff"};
-    border-left: 4px solid ${phase === "昼" ? "#7ccf7c" : "#6699cc"};
-    border-radius: 4px;
-  ">
-    <div>
-      ゲーム内時間：${phase}時間 ${mm}分${ss}秒 / 25分00秒
-    </div>
-    <svg width="60" height="60" viewBox="0 0 120 120">
-      <circle cx="60" cy="60" r="50" fill="none" stroke="#eee" stroke-width="10"/>
-      <circle id="phaseGauge" cx="60" cy="60" r="50"
-        fill="none" stroke="#00aaff" stroke-width="10"
-        stroke-linecap="round"
-        stroke-dasharray="314"
-        stroke-dashoffset="314"
-        transform="rotate(-90 60 60)"
-      />
-      <text id="gaugeText" x="60" y="60" font-size="48" font-weight="bold" fill="#333"
-        text-anchor="middle" dominant-baseline="middle">--</text>
-    </svg>
-  </div>
-`;
+      updateDisplay(phase, offset, mm, ss, label, inputTime, baseTime, cycleIndex, phaseStartTime, modeLabel);
+    }
+
+    function runPhaseConversionB(inputTime, label, modeLabel) {
+      const diffSec = Math.floor((inputTime - baseTimeB) / 1000);
+      const cycleIndex = Math.floor(diffSec / cycleSec);
+      const phaseStartTime = new Date(baseTimeB.getTime() + cycleIndex * cycleSec * 1000);
+      const offset = diffSec % cycleSec;
+      const phase = cycleIndex % 2 === 0 ? "昼" : "夜";
+      const mm = String(Math.floor(offset / 60)).padStart(2, "0");
+      const ss = String(offset % 60).padStart(2, "0");
+
+      updateDisplay(phase, offset, mm, ss, label, inputTime, baseTimeB, cycleIndex, phaseStartTime, modeLabel);
+    }
+
+    function updateDisplay(phase, offset, mm, ss, label, inputTime, baseTime, cycleIndex, phaseStartTime, modeLabel) {
+      const result = document.getElementById("result");
+
+      const gameTimeText =
+        '<div style="display: flex; align-items: center; gap: 16px; font-size: 1.2em; font-weight: bold; padding: 8px 12px; margin-bottom: 8px; background:' +
+        (phase === "昼" ? "#f0fff0" : "#f0f4ff") +
+        '; border-left: 4px solid ' +
+        (phase === "昼" ? "#7ccf7c" : "#6699cc") +
+        '; border-radius: 4px;">' +
+        '<div>ゲーム内時間：' + phase + '時間 ' + mm + '分' + ss + '秒 / 25分00秒</div>' +
+        '<svg width="60" height="60" viewBox="0 0 120 120">' +
+        '<circle cx="60" cy="60" r="50" fill="none" stroke="#eee" stroke-width="10"/>' +
+        '<circle id="phaseGauge" cx="60" cy="60" r="50" fill="none" stroke="#00aaff" stroke-width="10" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314" transform="rotate(-90 60 60)" />' +
+        '<text id="gaugeText" x="60" y="60" font-size="48" font-weight="bold" fill="#333" text-anchor="middle" dominant-baseline="middle">--</text>' +
+        '</svg>' +
+        '</div>';
+
       result.innerHTML =
         gameTimeText +
         "入力ソース: " + label + "<br><br>" +
         "指定時刻: " + inputTime.toLocaleString() + "<br>" +
-        "基準時刻: 2024/06/14 15:12:30（昼時間 00分00秒）<br>" +
-        "差分秒数: " + diffSec + " 秒<br>" +
+        "基準時刻: " + baseTime.toLocaleString() + "（" + modeLabel + "）<br>" +
+        "差分秒数: " + (offset + cycleIndex * cycleSec) + " 秒<br>" +
         "周期番号: " + cycleIndex + "（1周期 = " + cycleSec + " 秒）<br>" +
         "フェーズ判定: " + (cycleIndex % 2) + " → " + phase + "<br>" +
         "フェーズ開始時刻: " + phaseStartTime.toLocaleString() + "<br>" +
-        "フェーズ内時間: " + offsetSec + " 秒 → " + mm + "分" + ss + "秒";
+        "フェーズ内時間: " + offset + " 秒 → " + mm + "分" + ss + "秒";
 
-      // ゲージ更新
-      const gauge = document.getElementById("phaseGauge");
-      const gaugeText = document.getElementById("gaugeText");
-      const gaugeLength = 314;
-      const ratio = Math.min(offsetSec / cycleSec, 1);
-      gauge.setAttribute("stroke-dashoffset", gaugeLength * (1 - ratio));
-      gaugeText.textContent = phase;
+      document.getElementById("phaseGauge").setAttribute("stroke-dashoffset", 314 * (1 - offset / cycleSec));
+      document.getElementById("gaugeText").textContent = phase;
     }
-    function toHalfWidth(str) {
-      return str.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+    function show(text) {
+      document.getElementById("result").textContent = text;
+      document.getElementById("preview").textContent = "";
+      document.getElementById("gaugeText").textContent = "--:--";
+      document.getElementById("phaseGauge").setAttribute("stroke-dashoffset", "314");
     }
 
     function handleDrop(event) {
@@ -159,31 +177,26 @@
       );
       if (isNaN(dt.getTime())) return show("抽出された日時が無効です。");
 
-      runPhaseConversion(dt, "ファイル名 " + file.name);
+      const mode = dt.getTime() < baseTimeB.getTime() ? "A判定" : "B判定";
+      const label = "ファイル名 " + file.name;
+
+      if (mode === "A判定") {
+        runPhaseConversionA(dt, label, mode);
+      } else {
+        runPhaseConversionB(dt, label, mode);
+      }
 
       const reader = new FileReader();
       reader.onload = e => {
         document.getElementById("preview").innerHTML =
-          `<img src="${e.target.result}" alt="プレビュー画像">`;
+          '<img src="' + e.target.result + '" alt="プレビュー画像">';
       };
       reader.readAsDataURL(file);
     }
 
     function handleDragEnter(e) { e.preventDefault(); }
-    function handleDragOver(e) {
-      e.preventDefault();
-      dropzone.classList.add("dragover");
-    }
-    function handleDragLeave(e) {
-      dropzone.classList.remove("dragover");
-    }
-
-    function show(text) {
-      document.getElementById("result").textContent = text;
-      document.getElementById("preview").textContent = "";
-      document.getElementById("gaugeText").textContent = "--:--";
-      document.getElementById("phaseGauge").setAttribute("stroke-dashoffset", "314");
-    }
+    function handleDragOver(e) { e.preventDefault(); dropzone.classList.add("dragover"); }
+    function handleDragLeave(e) { dropzone.classList.remove("dragover"); }
 
     const dropzone = document.getElementById("dropzone");
     dropzone.addEventListener("drop", handleDrop);

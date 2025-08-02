@@ -14,6 +14,7 @@
       line-height: 1.6; color: #555;
       border: 2px dashed #aaa; background: #f8f8f8;
       transition: background 0.2s, border-color 0.2s;
+      cursor: pointer;
     }
     #dropzone.dragover {
       background: #e0f4ff; border-color: #339af0; color: #000;
@@ -48,18 +49,20 @@
         oninput="this.value = this.value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));">
       <div class="example-text">例：151230</div>
     </div>
-    <button onclick="convert()">判定</button>
+    <button onclick="convert()">計算</button>
   </div>
 
-  <div id="dropzone">
-    画像ファイルをここにドロップしてください。<br>
+  <div id="dropzone" onclick="fileInput.click()">
+    画像ファイルをこの枠内にドロップするか、クリックして参照してください。<br>
     形式例: BlueProtocol_20240614_151230.png
+    <input type="file" id="fileInput" style="display: none;">
   </div>
 
   <div id="result-container">
     <div id="result"></div>
     <div id="preview">プレビュー表示</div>
   </div>
+
   <script>
     const baseTimeB = new Date(2024, 5, 26, 16, 22, 10); // 2024/06/26 16:22:10
     const cycleSec = 1500;
@@ -93,8 +96,9 @@
       const d = dt.getDate();
       const nineAM = new Date(y, m, d, 9, 0, 0);
       const base = new Date(nineAM.getTime() - cycleSec * 1000 - offsetSec * 1000);
-      return dt < nineAM ? new Date(base.getTime() - 24 * 60 * 60 * 1000) : base;
+      return dt < nineAM ? new Date(base.getTime() - 86400000) : base;
     }
+
     function runPhaseConversionA(inputTime, label, modeLabel) {
       const baseTime = getDynamicBaseTime(inputTime);
       const diffSec = Math.floor((inputTime - baseTime) / 1000);
@@ -151,12 +155,24 @@
       document.getElementById("phaseGauge").setAttribute("stroke-dashoffset", 314 * (1 - offset / cycleSec));
       document.getElementById("gaugeText").textContent = phase;
     }
+
     function show(text) {
       document.getElementById("result").textContent = text;
       document.getElementById("preview").textContent = "";
-      document.getElementById("gaugeText").textContent = "--:--";
+      document.getElementById("gaugeText").textContent = "--";
       document.getElementById("phaseGauge").setAttribute("stroke-dashoffset", "314");
     }
+
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+
+    dropzone.addEventListener("drop", handleDrop);
+    dropzone.addEventListener("dragenter", (e) => { e.preventDefault(); dropzone.classList.add("dragover"); });
+    dropzone.addEventListener("dragover", (e) => { e.preventDefault(); });
+    dropzone.addEventListener("dragleave", () => { dropzone.classList.remove("dragover"); });
+
+    document.addEventListener("dragover", e => e.preventDefault());
+    document.addEventListener("drop", e => e.preventDefault());
 
     function handleDrop(event) {
       event.preventDefault();
@@ -164,6 +180,17 @@
       const file = event.dataTransfer.files[0];
       if (!file) return;
 
+      processFile(file);
+    }
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      processFile(file);
+    });
+
+    function processFile(file) {
       const match = file.name.match(/(\d{8})_(\d{6})/);
       if (!match) return show("ファイル名に日時情報が見つかりません: " + file.name);
 
@@ -193,23 +220,13 @@
       };
       reader.readAsDataURL(file);
     }
-
-    function handleDragEnter(e) { e.preventDefault(); }
-    function handleDragOver(e) { e.preventDefault(); dropzone.classList.add("dragover"); }
-    function handleDragLeave(e) { dropzone.classList.remove("dragover"); }
-
-    const dropzone = document.getElementById("dropzone");
-    dropzone.addEventListener("drop", handleDrop);
-    dropzone.addEventListener("dragenter", handleDragEnter);
-    dropzone.addEventListener("dragover", handleDragOver);
-    dropzone.addEventListener("dragleave", handleDragLeave);
-
-    document.addEventListener("dragover", e => e.preventDefault());
-    document.addEventListener("drop", e => e.preventDefault());
   </script>
-  <hr noshade size="1"><div align="right">BLUE PROTOCOL:©2019 Bandai Namco Online Inc.　©2019 Bandai Namco Studios Inc.<br>
-レグナス時間変換計算機:<a href="https://x.com/Kana_Bananan" target="_blank">ばな奈</a>/<a href="https://github.com/TheDeepBeyond/RegnasTime" target="_blank">GitHub</a></div>
+  <hr noshade size="1">
+  <div align="right">
+    BLUE PROTOCOL:©2019 Bandai Namco Online Inc.　©2019 Bandai Namco Studios Inc.<br>
+    レグナス時間変換計算機:
+    <a href="https://x.com/Kana_Bananan" target="_blank">ばな奈</a> /
+    <a href="https://github.com/TheDeepBeyond/RegnasTime" target="_blank">GitHub</a>
+  </div>
 </body>
 </html>
-
-

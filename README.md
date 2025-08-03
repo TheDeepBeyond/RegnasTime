@@ -1,6 +1,7 @@
 # レグナス時間変換計算機
 <h3>◆URL</h3>
-<li>https://thedeepbeyond.github.io/RegnasTime/</li>
+<li>PC版：https://thedeepbeyond.github.io/RegnasTime/</li>
+<li>スマホ版：https://thedeepbeyond.github.io/RegnasTime/index_sp.html</li>
 <h3>◆概要</h3>
 <li>BLUE PROTOCOLで撮影したSSのファイル名の形式（YYYYMMDD_hhmmss）からレグナス時間を算出する。</li>
 <li>年月日時刻の手動入力も可能。</li>
@@ -19,6 +20,5 @@
 <li>ドロップゾーンをクリックすることによってファイルの参照をすることもできます。
 <li><b>サーバにアップロードするといった事は一切行っておらず</b>単純にファイル名から時刻を読み取るだけです。</li>
 <li>PS5やXBOXで撮影した場合の保存名を知らない為、PC版と異なる保存名であれば手動入力を使ってください。</li>
-<li>スマホのブラウザでも動作可能ですがPCにてSSをD&Dすることを前提として設計してるので見づらいです。</li>
 <h3>◆謝辞</h3>
 <li>A判定のロジックを教えてくださったフルクガさんに感謝します。</li>
